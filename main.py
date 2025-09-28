@@ -7,7 +7,7 @@ from spotipy.oauth2 import SpotifyOAuth
 
 load_dotenv()
 
-year = input("Which year do you wanna travel to? (Please use YYYY-MM-DD format): ")
+date = input("Which year do you wanna travel to? (Please use YYYY-MM-DD format): ")
 
 header = {"USER-AGENT": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0"}
 
@@ -27,7 +27,7 @@ sp = spotipy.Spotify(
 
 user_id = sp.current_user()["id"]
 
-response = requests.get(f"https://www.billboard.com/charts/hot-100/{year}/",
+response = requests.get(f"https://www.billboard.com/charts/hot-100/{date}/",
                         headers=header)
 webpage = response.text
 soup = BeautifulSoup(webpage,"html.parser")
@@ -35,7 +35,7 @@ soup = BeautifulSoup(webpage,"html.parser")
 all_songs = soup.select("li ul li h3")
 song_names = [song.getText().strip() for song in all_songs]
 
-YYYY = year.split("-")[0]
+YYYY = date.split("-")[0]
 
 song_uris = []
 for song in song_names:
@@ -44,5 +44,8 @@ for song in song_names:
         uri = result["tracks"]["items"][0]["uri"]
         song_uris.append(uri)
     except IndexError:
-        print(f"❌ Song not found on Spotify: {song}")
-print(song_uris)
+        print(f"Song not found on Spotify: {song}")
+
+playlist = sp.user_playlist_create(user=user_id, name=f"{date} Billboard 100", public=False)
+
+sp.playlist_add_items(playlist_id=playlist["id"], items=song_uris)
